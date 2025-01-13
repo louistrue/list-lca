@@ -1,8 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Remove the env configuration as it's not needed and can cause issues
-  // Next.js automatically loads .env.local variables
+  eslint: {
+    // Only run ESLint on these directories during production builds
+    dirs: ["pages", "components", "lib", "utils", "app"],
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;

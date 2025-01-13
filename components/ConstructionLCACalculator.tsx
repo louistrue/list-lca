@@ -29,6 +29,13 @@ interface MaterialData {
   density?: number;
 }
 
+interface LCADataInput {
+  element: string;
+  material: string;
+  quantity: number;
+  unit: "kg" | "m3";
+}
+
 export default function ConstructionLCACalculator() {
   const [csvData, setCSVData] = useState<string[][]>([]);
   const [mappedData, setMappedData] = useState<MaterialData[]>([]);
@@ -79,44 +86,6 @@ export default function ConstructionLCACalculator() {
     });
   };
 
-  const findBestMatch = (
-    material: string | undefined,
-    availableMaterials: MaterialOption[]
-  ): MaterialOption | null => {
-    if (!material) return null;
-
-    // Convert both strings to uppercase for better matching
-    const searchTerm = material.toUpperCase();
-
-    // First try exact match
-    const exactMatch = availableMaterials.find(
-      (m) => m.name.toUpperCase() === searchTerm
-    );
-    if (exactMatch) return exactMatch;
-
-    // Then try includes match
-    const includesMatch = availableMaterials.find(
-      (m) =>
-        m.name.toUpperCase().includes(searchTerm) ||
-        searchTerm.includes(m.name.toUpperCase())
-    );
-    if (includesMatch) return includesMatch;
-
-    // Finally try fuzzy match
-    const words = searchTerm.split(/\s+/);
-    for (const material of availableMaterials) {
-      const materialWords = material.name.toUpperCase().split(/\s+/);
-      const matchingWords = words.filter((word) =>
-        materialWords.some(
-          (mWord) => mWord.includes(word) || word.includes(mWord)
-        )
-      );
-      if (matchingWords.length > 0) return material;
-    }
-
-    return null;
-  };
-
   const handleColumnMapping = async (
     mapping: Record<string, string>,
     unit: "kg" | "m3"
@@ -158,7 +127,9 @@ export default function ConstructionLCACalculator() {
     }
   };
 
-  const fetchLCAData = async (data: any[]): Promise<MaterialData[]> => {
+  const fetchLCAData = async (
+    data: LCADataInput[]
+  ): Promise<MaterialData[]> => {
     try {
       const response = await fetch("/api/lca-data", {
         method: "POST",
@@ -188,15 +159,18 @@ export default function ConstructionLCACalculator() {
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
-      return data.map((item: any) => ({
-        ...item,
-        co2: 0,
-        ubp: 0,
-        kwh: 0,
-        matchedMaterial: "Error fetching data",
-        matchScore: null,
-        availableMaterials: [],
-      }));
+      return data.map(
+        (item: LCADataInput): MaterialData => ({
+          ...item,
+          co2: 0,
+          ubp: 0,
+          kwh: 0,
+          kg: item.quantity,
+          matchedMaterial: "Error fetching data",
+          matchScore: null,
+          availableMaterials: [],
+        })
+      );
     }
   };
 

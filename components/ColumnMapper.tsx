@@ -31,9 +31,6 @@ export default function ColumnMapper({
 
   const [unit, setUnit] = useState<"kg" | "m3">(initialUnit);
 
-  // Create unique identifiers for each column (including duplicates)
-  const columnIdentifiers = columns.map((col, index) => `${col}:${index}`);
-
   // Create display names for columns with duplicates
   const getDisplayName = (col: string, index: number) => {
     const count = columns.filter((c) => c === col).length;
@@ -41,37 +38,42 @@ export default function ColumnMapper({
   };
 
   return (
-    <div className="space-y-6 bg-white p-6 rounded-lg shadow">
+    <div className="space-y-6 bg-white dark:bg-[#1a1b26] p-6 rounded-lg shadow dark:shadow-[#24283b]">
       {/* Preview Table */}
       {csvPreview.length > 0 && (
         <div className="overflow-x-auto">
-          <h3 className="font-medium text-gray-700 mb-2">Data Preview</h3>
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <h3 className="font-medium text-gray-700 dark:text-[#a9b1d6] mb-2">
+            Datenvorschau
+          </h3>
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-[#24283b]">
+            <thead className="bg-gray-50 dark:bg-[#24283b]">
               <tr>
                 {columns.map((header, i) => (
                   <th
                     key={i}
-                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-[#a9b1d6] uppercase tracking-wider"
                   >
                     {getDisplayName(header, i)}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-[#1a1b26] divide-y divide-gray-200 dark:divide-[#24283b]">
               {csvPreview.map((row, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-gray-50">
+                <tr
+                  key={rowIndex}
+                  className="hover:bg-gray-50 dark:hover:bg-[#292e42]"
+                >
                   {columns.map((col, colIndex) => {
                     const currentIdentifier = `${col}:${colIndex}`;
                     return (
                       <td
                         key={colIndex}
-                        className={`px-3 py-2 text-sm ${
+                        className={`px-3 py-2 text-sm text-gray-900 dark:text-[#a9b1d6] ${
                           mapping.element === currentIdentifier ||
                           mapping.material === currentIdentifier ||
                           mapping.quantity === currentIdentifier
-                            ? "bg-blue-50"
+                            ? "bg-blue-50 dark:bg-[#24283b]"
                             : ""
                         }`}
                       >
@@ -89,11 +91,10 @@ export default function ColumnMapper({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          // Convert identifiers back to column names before sending
           const cleanMapping = Object.fromEntries(
             Object.entries(mapping).map(([key, value]) => [
               key,
-              value.split(":")[0], // Extract just the column name
+              value.split(":")[0],
             ])
           );
           onMap(cleanMapping, unit);
@@ -101,37 +102,46 @@ export default function ColumnMapper({
         className="space-y-6"
       >
         <div className="grid grid-cols-3 gap-4">
-          {Object.keys(mapping).map((field) => (
-            <div key={field} className="flex flex-col">
-              <label htmlFor={field} className="mb-2 font-medium">
-                {field.charAt(0).toUpperCase() + field.slice(1)}
-              </label>
-              <select
-                id={field}
-                value={mapping[field]}
-                onChange={(e) =>
-                  setMapping((prev) => ({ ...prev, [field]: e.target.value }))
-                }
-                className="p-2 border rounded"
-                required
-              >
-                <option value="">Select {field} column</option>
-                {columns.map((column, index) => (
-                  <option
-                    key={`${field}-${column}-${index}`}
-                    value={`${column}:${index}`}
-                  >
-                    {getDisplayName(column, index)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
+          {Object.keys(mapping).map((field) => {
+            const labels = {
+              element: "Bauteil",
+              material: "Material",
+              quantity: "Menge",
+            };
+            return (
+              <div key={field} className="flex flex-col">
+                <label
+                  htmlFor={field}
+                  className="mb-2 font-medium text-gray-700 dark:text-[#a9b1d6]"
+                >
+                  {labels[field as keyof typeof labels]}
+                </label>
+                <select
+                  id={field}
+                  value={mapping[field]}
+                  onChange={(e) =>
+                    setMapping((prev) => ({ ...prev, [field]: e.target.value }))
+                  }
+                  className="p-2 border rounded bg-white dark:bg-[#1a1b26] text-gray-900 dark:text-[#a9b1d6] border-gray-300 dark:border-[#24283b]"
+                  required
+                >
+                  <option value="">Spalte auswählen</option>
+                  {columns.map((column, index) => (
+                    <option
+                      key={`${field}-${column}-${index}`}
+                      value={`${column}:${index}`}
+                    >
+                      {getDisplayName(column, index)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
         </div>
-
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <label className="block mb-4 font-medium text-gray-700">
-            Select Quantity Unit
+        <div className="bg-gray-50 dark:bg-[#24283b] p-4 rounded-lg">
+          <label className="block mb-4 font-medium text-gray-700 dark:text-[#a9b1d6]">
+            Einheit wählen
           </label>
           <div className="grid grid-cols-2 gap-4">
             <button
@@ -139,16 +149,22 @@ export default function ColumnMapper({
               onClick={() => setUnit("kg")}
               className={`flex items-center justify-center gap-3 p-4 rounded-lg border-2 transition-all ${
                 unit === "kg"
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-[#7aa2f7] bg-[#7aa2f7]/10 text-[#7aa2f7]"
+                  : "border-gray-200 dark:border-[#24283b] hover:border-gray-300 dark:hover:border-[#414868] text-gray-700 dark:text-[#a9b1d6]"
               }`}
             >
               <Scale
-                className={unit === "kg" ? "text-blue-500" : "text-gray-400"}
+                className={
+                  unit === "kg"
+                    ? "text-[#7aa2f7]"
+                    : "text-gray-400 dark:text-[#565f89]"
+                }
               />
               <div className="text-left">
-                <div className="font-medium">Mass</div>
-                <div className="text-sm text-gray-500">Kilograms (kg)</div>
+                <div className="font-medium">Masse</div>
+                <div className="text-sm text-gray-500 dark:text-[#565f89]">
+                  Kilogramm (kg)
+                </div>
               </div>
             </button>
 
@@ -157,16 +173,22 @@ export default function ColumnMapper({
               onClick={() => setUnit("m3")}
               className={`flex items-center justify-center gap-3 p-4 rounded-lg border-2 transition-all ${
                 unit === "m3"
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-[#7aa2f7] bg-[#7aa2f7]/10 text-[#7aa2f7]"
+                  : "border-gray-200 dark:border-[#24283b] hover:border-gray-300 dark:hover:border-[#414868] text-gray-700 dark:text-[#a9b1d6]"
               }`}
             >
               <Box
-                className={unit === "m3" ? "text-blue-500" : "text-gray-400"}
+                className={
+                  unit === "m3"
+                    ? "text-[#7aa2f7]"
+                    : "text-gray-400 dark:text-[#565f89]"
+                }
               />
               <div className="text-left">
-                <div className="font-medium">Volume</div>
-                <div className="text-sm text-gray-500">Cubic Meters (m³)</div>
+                <div className="font-medium">Volumen</div>
+                <div className="text-sm text-gray-500 dark:text-[#565f89]">
+                  Kubikmeter (m³)
+                </div>
               </div>
             </button>
           </div>
@@ -175,18 +197,20 @@ export default function ColumnMapper({
         <div className="flex gap-3">
           <button
             type="submit"
-            className="flex-1 bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+            className="flex-1 bg-[#7aa2f7] text-white px-4 py-3 rounded-lg hover:bg-[#7aa2f7]/90 transition-colors"
           >
-            {initialMapping ? "Update Mapping" : "Map Columns and Process Data"}
+            {initialMapping
+              ? "Zuordnung aktualisieren"
+              : "Spalten zuordnen und Daten verarbeiten"}
           </button>
 
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="px-4 py-3 rounded-lg border border-gray-300 dark:border-[#24283b] hover:bg-gray-50 dark:hover:bg-[#292e42] text-gray-700 dark:text-[#a9b1d6] transition-colors"
             >
-              Cancel
+              Abbrechen
             </button>
           )}
         </div>

@@ -16,6 +16,8 @@ interface MaterialOption {
 interface MaterialData {
   element: string;
   material: string;
+  quantity: number;
+  unit: "kg" | "m3";
   kg: number;
   co2: number;
   ubp: number;
@@ -23,7 +25,6 @@ interface MaterialData {
   matchedMaterial: string;
   matchScore: number | null;
   availableMaterials: MaterialOption[];
-  unit: string;
   density?: number;
 }
 
@@ -217,14 +218,14 @@ export default function ResultsTable({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <TotalsSummary data={totals} />
 
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <button
             onClick={() => setIsGrouped(!isGrouped)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-[#a9b1d6] bg-white dark:bg-[#1a1b26] border border-gray-300 dark:border-[#24283b] rounded-lg hover:bg-gray-50 dark:hover:bg-[#24283b] transition-colors"
           >
             {isGrouped ? "Gruppierung aufheben" : "Ähnliche Zeilen gruppieren"}
           </button>
@@ -234,9 +235,9 @@ export default function ResultsTable({
               type="checkbox"
               checked={selectedRows.length === data.length}
               onChange={(e) => handleSelectAll(e.target.checked)}
-              className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              className="h-4 w-4 text-[#7aa2f7] dark:text-[#7aa2f7] rounded border-gray-300 dark:border-[#24283b] focus:ring-[#7aa2f7] dark:focus:ring-[#7aa2f7] dark:bg-[#1a1b26]"
             />
-            <span className="ml-2 text-sm text-gray-600">
+            <span className="ml-2 text-sm text-gray-600 dark:text-[#a9b1d6]">
               {selectedRows.length} Zeilen ausgewählt
             </span>
           </div>
@@ -282,59 +283,59 @@ export default function ResultsTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-[#24283b] bg-white dark:bg-[#1a1b26] shadow-sm">
+        <table className="w-full divide-y divide-gray-200 dark:divide-[#24283b]">
+          <thead className="bg-gray-50 dark:bg-[#24283b]">
             <tr>
               <th className="w-12 px-4 py-3">
                 <input
                   type="checkbox"
                   checked={selectedRows.length === data.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  className="h-4 w-4 text-[#7aa2f7] dark:text-[#7aa2f7] rounded border-gray-300 dark:border-[#24283b] focus:ring-[#7aa2f7] dark:focus:ring-[#7aa2f7] dark:bg-[#1a1b26]"
                 />
               </th>
               {isGrouped && <th className="w-8 px-2 py-3"></th>}
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-[#a9b1d6]">
                 Element
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-[#a9b1d6]">
                 Material
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-[#a9b1d6]">
                 Zugeordnetes Material
               </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-[#a9b1d6]">
                 {data[0]?.unit === "m3" ? "Volumen (m³)" : "Masse (kg)"}
               </th>
               {data[0]?.unit === "m3" && (
                 <>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-[#a9b1d6]">
                     Dichte (kg/m³)
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-[#a9b1d6]">
                     Masse (kg)
                   </th>
                 </>
               )}
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-[#a9b1d6]">
                 CO₂ (kg CO₂ eq)
               </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-[#a9b1d6]">
                 UBP (Pkt)
               </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-[#a9b1d6]">
                 Energie (kWh)
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-[#1a1b26] divide-y divide-gray-200 dark:divide-[#24283b]">
             {isGrouped && groupedData
               ? groupedData.map((group) => {
                   const key = `${group.element}|${group.material}`;
                   return (
                     <Fragment key={key}>
-                      <tr className="hover:bg-gray-50">
+                      <tr className="hover:bg-gray-50 dark:hover:bg-[#292e42]">
                         <td className="px-4 py-2">
                           <input
                             type="checkbox"
@@ -353,7 +354,7 @@ export default function ResultsTable({
                                 );
                               }
                             }}
-                            className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                            className="h-4 w-4 text-[#7aa2f7] dark:text-[#7aa2f7] rounded border-gray-300 dark:border-[#24283b] focus:ring-[#7aa2f7] dark:focus:ring-[#7aa2f7] dark:bg-[#1a1b26]"
                           />
                         </td>
                         <td className="px-2 py-2">
@@ -368,8 +369,12 @@ export default function ResultsTable({
                             )}
                           </button>
                         </td>
-                        <td className="px-4 py-2">{group.element}</td>
-                        <td className="px-4 py-2">{group.material}</td>
+                        <td className="px-4 py-2 text-gray-900 dark:text-[#a9b1d6]">
+                          {group.element}
+                        </td>
+                        <td className="px-4 py-2 text-gray-900 dark:text-[#a9b1d6]">
+                          {group.material}
+                        </td>
                         <td className="px-4 py-2">
                           <MaterialDropdown
                             materials={group.availableMaterials}
@@ -380,32 +385,35 @@ export default function ResultsTable({
                             showDensity={group.unit === "m3"}
                           />
                         </td>
-                        <td className="px-4 py-2 text-right font-medium">
+                        <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-[#a9b1d6]">
                           {group.quantity.toFixed(2)}
                         </td>
                         {group.unit === "m3" && (
                           <>
-                            <td className="px-4 py-2 text-right">
+                            <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                               {group.density?.toFixed(2) || "N/A"}
                             </td>
-                            <td className="px-4 py-2 text-right font-medium">
+                            <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-[#a9b1d6]">
                               {group.kg.toFixed(2)}
                             </td>
                           </>
                         )}
-                        <td className="px-4 py-2 text-right font-medium">
+                        <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-[#a9b1d6]">
                           {group.co2.toFixed(2)}
                         </td>
-                        <td className="px-4 py-2 text-right font-medium">
+                        <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-[#a9b1d6]">
                           {group.ubp.toFixed(2)}
                         </td>
-                        <td className="px-4 py-2 text-right font-medium">
+                        <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-[#a9b1d6]">
                           {group.kwh.toFixed(2)}
                         </td>
                       </tr>
                       {expandedGroups[key] &&
                         group.rows.map((index) => (
-                          <tr key={`${key}-${index}`} className="bg-gray-50">
+                          <tr
+                            key={`${key}-${index}`}
+                            className="bg-gray-50 dark:bg-[#292e42]"
+                          >
                             <td className="px-4 py-2">
                               <input
                                 type="checkbox"
@@ -413,12 +421,14 @@ export default function ResultsTable({
                                 onChange={(e) =>
                                   handleRowSelect(index, e.target.checked)
                                 }
-                                className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                                className="h-4 w-4 text-[#7aa2f7] dark:text-[#7aa2f7] rounded border-gray-300 dark:border-[#24283b] focus:ring-[#7aa2f7] dark:focus:ring-[#7aa2f7] dark:bg-[#1a1b26]"
                               />
                             </td>
                             <td className="px-2 py-2"></td>
-                            <td className="px-4 py-2">{data[index].element}</td>
-                            <td className="px-4 py-2">
+                            <td className="px-4 py-2 text-gray-900 dark:text-[#a9b1d6]">
+                              {data[index].element}
+                            </td>
+                            <td className="px-4 py-2 text-gray-900 dark:text-[#a9b1d6]">
                               {data[index].material}
                             </td>
                             <td className="px-4 py-2">
@@ -431,26 +441,26 @@ export default function ResultsTable({
                                 showDensity={data[index].unit === "m3"}
                               />
                             </td>
-                            <td className="px-4 py-2 text-right">
+                            <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                               {data[index].quantity.toFixed(2)}
                             </td>
                             {data[index].unit === "m3" && (
                               <>
-                                <td className="px-4 py-2 text-right">
+                                <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                                   {data[index].density?.toFixed(2) || "N/A"}
                                 </td>
-                                <td className="px-4 py-2 text-right">
+                                <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                                   {data[index].kg.toFixed(2)}
                                 </td>
                               </>
                             )}
-                            <td className="px-4 py-2 text-right">
+                            <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                               {data[index].co2.toFixed(2)}
                             </td>
-                            <td className="px-4 py-2 text-right">
+                            <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                               {data[index].ubp.toFixed(2)}
                             </td>
-                            <td className="px-4 py-2 text-right">
+                            <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                               {data[index].kwh.toFixed(2)}
                             </td>
                           </tr>
@@ -462,9 +472,14 @@ export default function ResultsTable({
                 data.map((row, index) => (
                   <tr
                     key={index}
-                    className={`${
-                      selectedRows.includes(index) ? "bg-blue-50" : ""
-                    } hover:bg-gray-50`}
+                    className={`
+                      ${
+                        selectedRows.includes(index)
+                          ? "bg-blue-50 dark:bg-[#24283b]"
+                          : ""
+                      }
+                      hover:bg-gray-50 dark:hover:bg-[#292e42]
+                    `}
                   >
                     <td className="px-4 py-2">
                       <input
@@ -473,11 +488,15 @@ export default function ResultsTable({
                         onChange={(e) =>
                           handleRowSelect(index, e.target.checked)
                         }
-                        className="h-4 w-4 text-blue-600"
+                        className="h-4 w-4 text-[#7aa2f7] dark:text-[#7aa2f7] rounded border-gray-300 dark:border-[#24283b] focus:ring-[#7aa2f7] dark:focus:ring-[#7aa2f7] dark:bg-[#1a1b26]"
                       />
                     </td>
-                    <td className="px-4 py-2">{row.element}</td>
-                    <td className="px-4 py-2">{row.material}</td>
+                    <td className="px-4 py-2 text-gray-900 dark:text-[#a9b1d6]">
+                      {row.element}
+                    </td>
+                    <td className="px-4 py-2 text-gray-900 dark:text-[#a9b1d6]">
+                      {row.material}
+                    </td>
                     <td className="px-4 py-2">
                       <MaterialDropdown
                         materials={row.availableMaterials}
@@ -488,26 +507,26 @@ export default function ResultsTable({
                         showDensity={row.unit === "m3"}
                       />
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                       {row.quantity.toFixed(2)}
                     </td>
                     {row.unit === "m3" && (
                       <>
-                        <td className="px-4 py-2 text-right">
+                        <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                           {row.density?.toFixed(2) || "N/A"}
                         </td>
-                        <td className="px-4 py-2 text-right">
+                        <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                           {row.kg.toFixed(2)}
                         </td>
                       </>
                     )}
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                       {row.co2.toFixed(2)}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                       {row.ubp.toFixed(2)}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 text-right text-gray-900 dark:text-[#a9b1d6]">
                       {row.kwh.toFixed(2)}
                     </td>
                   </tr>

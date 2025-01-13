@@ -129,8 +129,9 @@ export async function POST(req: Request) {
       );
 
       const matchedMaterial = fuseResult.length > 0 ? fuseResult[0].item : null;
-      const matchScore = fuseResult.length > 0 ? fuseResult[0].score : null;
-      const isGoodMatch = matchScore !== null && matchScore < 0.4;
+      const matchScore =
+        fuseResult.length > 0 ? fuseResult[0].score ?? null : null;
+      const isGoodMatch = typeof matchScore === "number" && matchScore < 0.4;
 
       // Calculate kg based on density if unit is m3
       let kg = item.quantity;
@@ -145,14 +146,22 @@ export async function POST(req: Request) {
         density: matchedMaterial
           ? parseFloat(matchedMaterial.density || "0")
           : 0,
-        co2: isGoodMatch ? (matchedMaterial?.gwpTotal ?? 0) * kg : 0,
-        ubp: isGoodMatch ? (matchedMaterial?.ubp21Total ?? 0) * kg : 0,
-        kwh: isGoodMatch
-          ? (matchedMaterial?.primaryEnergyNonRenewableTotal ?? 0) * kg
-          : 0,
-        matchedMaterial: isGoodMatch
-          ? matchedMaterial.nameDE
-          : `No match found for: ${item.material}`,
+        co2:
+          isGoodMatch && matchedMaterial
+            ? (matchedMaterial.gwpTotal ?? 0) * kg
+            : 0,
+        ubp:
+          isGoodMatch && matchedMaterial
+            ? (matchedMaterial.ubp21Total ?? 0) * kg
+            : 0,
+        kwh:
+          isGoodMatch && matchedMaterial
+            ? (matchedMaterial.primaryEnergyNonRenewableTotal ?? 0) * kg
+            : 0,
+        matchedMaterial:
+          isGoodMatch && matchedMaterial
+            ? matchedMaterial.nameDE
+            : `No match found for: ${item.material}`,
         matchScore,
         searchTerm,
         availableMaterials: kgMaterials.map((m) => ({
