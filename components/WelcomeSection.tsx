@@ -19,10 +19,10 @@ export default function WelcomeSection() {
             />
             <div>
               <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-                Ökobilanzierung: MAS FHNW Digitales Bauen
+                Ökobilanzierung: Listenbasiert
               </h1>
               <span className="block text-xl font-medium text-blue-600 dark:text-blue-400 mt-2">
-                CAS Integriertes Projektmanagement
+                ...because Excel runs the world
               </span>
             </div>
           </div>
@@ -31,23 +31,18 @@ export default function WelcomeSection() {
 
         <div className="space-y-4 text-gray-600 dark:text-gray-300">
           <p>
-            Ein einfaches Hilfsmittel für die Berechnung der Ökobilanz im Rahmen
-            des CAS. Laden Sie Ihre Mengendaten als CSV-Datei hoch und das Tool
-            hilft Ihnen bei:
+            Ein einfaches Hilfsmittel für die Berechnung von Ökobilanzen
+            basierend auf listenformatierten Daten. Laden Sie Ihre Mengendaten
+            als CSV-Datei hoch und das Tool hilft Ihnen bei:
           </p>
 
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>Automatischer Zuordnung von KBOB Materialien</li>
             <li>Berechnung von CO₂, UBP und Primärenergie</li>
             <li>Gruppierung und Summierung ähnlicher Bauteile</li>
+            <li>Hinzufügen von Bewehrung pro Bauteil</li>
             <li>Export der Ergebnisse für weitere Analysen</li>
           </ul>
-
-          <div className="text-sm text-gray-500 dark:text-gray-400 pt-2">
-            Hinweis: Dies ist ein vereinfachtes Hilfsmittel für Übungszwecke.
-            Für professionelle Ökobilanzierung nutzen Sie bitte spezialisierte
-            Software.
-          </div>
         </div>
       </div>
 
@@ -87,8 +82,7 @@ export default function WelcomeSection() {
             >
               GitHub
             </a>
-            . Studierende können den Code einsehen, um mehr über moderne
-            Webtechnologien zu lernen
+            .
           </span>
         </div>
       </div>

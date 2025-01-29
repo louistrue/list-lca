@@ -19,6 +19,15 @@ interface Material {
   primaryEnergyNonRenewableTotal: number | null;
 }
 
+interface KBOBMaterial {
+  uuid: string;
+  nameDE: string;
+  density: string;
+  ubp21Total: number | null;
+  gwpTotal: number | null;
+  primaryEnergyNonRenewableTotal: number | null;
+}
+
 export async function POST(req: Request) {
   try {
     const data = await req.json();
@@ -42,14 +51,13 @@ export async function POST(req: Request) {
       };
     });
 
-    const fetchLCAData = async (): Promise<Material[]> => {
+    const fetchLCAData = async (): Promise<KBOBMaterial[]> => {
       try {
         if (!LCADATA_API_KEY) {
           throw new Error("API key is not configured in environment variables");
         }
 
         try {
-          console.log("API Key being used:", LCADATA_API_KEY);
 
           const response = await fetch(LCA_API_URL, {
             method: "GET",
@@ -99,46 +107,124 @@ export async function POST(req: Request) {
     const lcaMaterials = await fetchLCAData();
     console.log("Total materials fetched:", lcaMaterials.length);
 
-    const kgMaterials = lcaMaterials.filter(
-      (material) => material.unit === "kg"
-    );
-    console.log("Total kg materials:", kgMaterials.length);
+    // Helper function to find best material match
+    function findBestMaterialMatch(
+      searchTerm: string,
+      materials: KBOBMaterial[]
+    ): { material: KBOBMaterial | null; score: number } {
+      const normalizedSearch = searchTerm.toLowerCase().trim();
 
-    const fuse = new Fuse(kgMaterials, {
-      keys: ["nameDE", "nameFR"],
-      threshold: 0.6,
-      includeScore: true,
-      minMatchCharLength: 3,
-      ignoreLocation: true,
-      shouldSort: true,
-      findAllMatches: true,
-    });
+      // Common material mappings with keywords and preferred materials
+      const materialMappings: { [key: string]: { keywords: string[], preferredTypes?: string[] } } = {
+        "betonfertigteil": {
+          keywords: ["fertigteil", "vorfabriziert", "betonfertigteil"],
+          preferredTypes: ["Betonfertigteil"]
+        },
+        "beton": {
+          keywords: ["beton", "concrete", "zement"],
+          preferredTypes: ["Hochbaubeton"]
+        },
+        "bewehrung": {
+          keywords: ["bewehrung", "armierung", "stahl"],
+          preferredTypes: ["Armierungsstahl"]
+        },
+        "mauerwerk": {
+          keywords: ["mauerwerk", "mauer", "ziegel"],
+          preferredTypes: ["Backstein"]
+        },
+        "holz": {
+          keywords: ["holz", "wood", "timber"],
+          preferredTypes: ["Brettschichtholz"]
+        }
+      };
 
-    const dataWithLCA = cleanedData.map((item) => {
-      const searchTerm = item.material.toUpperCase();
-      console.log(`Searching for material: ${searchTerm}`);
+      let bestMatch: KBOBMaterial | null = null;
+      let bestScore = 0;
 
-      const fuseResult = fuse.search(searchTerm);
+      materials.forEach((material) => {
+        const materialName = material.nameDE.toLowerCase();
+        let score = 0;
 
-      console.log(
-        `Found ${fuseResult.length} potential matches:`,
-        fuseResult.map((r) => ({
-          name: r.item.nameDE,
-          score: r.score,
-        }))
+        // Check for exact matches first
+        if (materialName === normalizedSearch) {
+          score = 1;
+        } else {
+          // Check material type mappings
+          for (const [type, { keywords, preferredTypes }] of Object.entries(materialMappings)) {
+            if (normalizedSearch.includes(type)) {
+              // Check if this is a preferred material type
+              if (preferredTypes?.some(pt => material.nameDE.includes(pt))) {
+                score = Math.max(score, 0.9);
+              }
+
+              // Check for keyword matches
+              keywords.forEach(keyword => {
+                if (materialName.includes(keyword)) {
+                  score = Math.max(score, 0.8);
+                }
+              });
+            }
+          }
+
+          // If no mapping match, do fuzzy matching
+          if (score === 0) {
+            const words = normalizedSearch.split(/\s+/);
+            words.forEach(word => {
+              if (materialName.includes(word)) {
+                score += 0.3;
+              }
+            });
+          }
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = material;
+        }
+      });
+
+      return { material: bestMatch, score: bestScore };
+    }
+
+    // Process each input item
+    const processedItems = cleanedData.map((item) => {
+      const searchTerm = item.material.toLowerCase();
+      const { material: matchedMaterial, score: matchScore } = findBestMaterialMatch(
+        searchTerm,
+        lcaMaterials
       );
 
-      const matchedMaterial = fuseResult.length > 0 ? fuseResult[0].item : null;
-      const matchScore =
-        fuseResult.length > 0 ? fuseResult[0].score ?? null : null;
-      const isGoodMatch = typeof matchScore === "number" && matchScore < 0.4;
+      const isGoodMatch = matchScore >= 0.8;
+      const kg =
+        item.unit === "m3" && matchedMaterial
+          ? item.quantity * parseFloat(matchedMaterial.density || "0")
+          : item.quantity;
 
-      // Calculate kg based on density if unit is m3
-      let kg = item.quantity;
-      if (item.unit === "m3" && matchedMaterial) {
-        const density = parseFloat(matchedMaterial.density || "0");
-        kg = item.quantity * density;
-      }
+      // Filter relevant materials based on type
+      const relevantMaterials = lcaMaterials.filter(m => {
+        const name = m.nameDE.toLowerCase();
+        const searchTermL = searchTerm.toLowerCase();
+
+        // Match based on material type
+        if (searchTermL.includes('betonfertigteil')) {
+          return name.includes('fertigteil') || name.includes('vorfabriziert');
+        }
+        if (searchTermL.includes('beton')) {
+          return name.includes('beton') || name.includes('concrete');
+        }
+        if (searchTermL.includes('bewehrung')) {
+          return name.includes('bewehrung') || name.includes('armierung');
+        }
+        if (searchTermL.includes('mauerwerk')) {
+          return name.includes('mauerwerk') || name.includes('mauer');
+        }
+        if (searchTermL.includes('holz')) {
+          return name.includes('holz') || name.includes('wood');
+        }
+
+        // Default to showing all materials
+        return true;
+      });
 
       return {
         ...item,
@@ -161,10 +247,10 @@ export async function POST(req: Request) {
         matchedMaterial:
           isGoodMatch && matchedMaterial
             ? matchedMaterial.nameDE
-            : `No match found for: ${item.material}`,
+            : null,
         matchScore,
         searchTerm,
-        availableMaterials: kgMaterials.map((m) => ({
+        availableMaterials: relevantMaterials.map((m) => ({
           id: m.uuid,
           name: m.nameDE,
           density: parseFloat(m.density || "0"),
@@ -175,7 +261,7 @@ export async function POST(req: Request) {
       };
     });
 
-    return NextResponse.json(dataWithLCA);
+    return NextResponse.json(processedItems);
   } catch (error) {
     console.error("Error processing request:", error);
     return NextResponse.json(

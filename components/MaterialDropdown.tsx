@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,19 +10,19 @@ interface MaterialOption {
   co2: number;
   ubp: number;
   kwh: number;
-  density?: number;
+  density: number;
 }
 
 interface MaterialDropdownProps {
   materials: MaterialOption[];
-  selectedMaterial: string;
+  selectedMaterial?: string;
   onSelect: (material: MaterialOption) => void;
   placeholder?: string;
   showDensity?: boolean;
 }
 
 export default function MaterialDropdown({
-  materials,
+  materials = [],
   selectedMaterial,
   onSelect,
   placeholder = "Material auswählen...",
@@ -30,18 +30,47 @@ export default function MaterialDropdown({
 }: MaterialDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dropdownStyles, setDropdownStyles] = useState<null | {
-    top: number;
-    left: number;
-  }>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Filter materials based on search term
-  const filteredMaterials = materials.filter((material) =>
-    material.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setSearchTerm("");
+      // Focus search input when opening
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  };
+
+  const handleSelect = (material: MaterialOption) => {
+    console.log('MaterialDropdown handleSelect:', {
+      material,
+      selectedMaterial,
+      materials
+    });
+    
+    setIsOpen(false);
+    setSearchTerm("");
+    onSelect({
+      id: material.id,
+      name: material.name,
+      co2: material.co2,
+      ubp: material.ubp,
+      kwh: material.kwh,
+      density: material.density,
+    });
+  };
+
+  const filteredMaterials = useMemo(() => {
+    if (!searchTerm) return materials;
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return materials.filter((material) =>
+      material.name.toLowerCase().includes(lowerSearchTerm)
+    );
+  }, [materials, searchTerm]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -55,155 +84,78 @@ export default function MaterialDropdown({
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Focus input when dropdown opens
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isOpen]);
-
-  const updatePosition = () => {
-    const buttonRect = dropdownRef.current?.getBoundingClientRect();
-    if (!buttonRect) return;
-
-    const viewportHeight = window.innerHeight;
-    const spaceBelow = viewportHeight - buttonRect.bottom;
-    const spaceAbove = buttonRect.top;
-    // Estimate dropdown height if not yet rendered
-    const dropdownHeight =
-      listboxRef.current?.getBoundingClientRect().height ?? 400;
-
-    let top = buttonRect.bottom + window.scrollY + 4;
-
-    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-      top = buttonRect.top + window.scrollY - dropdownHeight - 4;
-    } else if (spaceBelow < dropdownHeight) {
-      window.scrollBy({
-        top: dropdownHeight - spaceBelow + 40,
-        behavior: "smooth",
-      });
-    }
-
-    setDropdownStyles({
-      top,
-      left: buttonRect.left,
-    });
-  };
-
-  const handleToggle = () => {
-    if (!isOpen) {
-      // Calculate position before opening
-      updatePosition();
-    } else {
-      // Reset position when closing
-      setDropdownStyles(null);
-    }
-    setIsOpen(!isOpen);
-  };
-
-  // Update position when open
-  useEffect(() => {
-    if (!isOpen) return;
-
-    updatePosition();
-    window.addEventListener("scroll", updatePosition);
-    window.addEventListener("resize", updatePosition);
-
     return () => {
-      window.removeEventListener("scroll", updatePosition);
-      window.removeEventListener("resize", updatePosition);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
-
-  const handleSelect = (material: MaterialOption) => {
-    onSelect(material);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
+  }, []);
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         onClick={handleToggle}
-        className={cn(
-          "w-full px-3 py-2 text-left text-sm border rounded-lg text-gray-900 dark:text-[#a9b1d6] bg-white dark:bg-[#1a1b26]",
-          "hover:border-gray-400 dark:hover:border-[#414868] focus:outline-none focus:ring-2 focus:ring-[#7aa2f7] dark:focus:ring-[#7aa2f7]",
-          "flex items-center justify-between gap-2",
-          isOpen
-            ? "border-gray-400 dark:border-[#414868]"
-            : "border-gray-300 dark:border-[#24283b]"
-        )}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-left text-gray-700 dark:text-[#a9b1d6] bg-white dark:bg-[#1a1b26] border border-gray-300 dark:border-[#24283b] rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-[#292e42] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >
-        <span className="truncate">{selectedMaterial || placeholder}</span>
-        <ChevronDown className="w-4 h-4 text-gray-500 dark:text-[#565f89] flex-shrink-0" />
+        <span className="truncate">
+          {selectedMaterial || "Material auswählen..."}
+          {showDensity && materials.find(m => m.name === selectedMaterial)?.density !== undefined && (
+            <span className="ml-2 text-gray-500 dark:text-[#565f89]">
+              ({materials.find(m => m.name === selectedMaterial)?.density} kg/m³)
+            </span>
+          )}
+        </span>
+        <ChevronDown className="h-4 w-4 text-gray-400 dark:text-[#565f89]" />
       </button>
 
-      {isOpen && dropdownStyles && (
+      {isOpen && (
         <div
           ref={listboxRef}
-          role="listbox"
-          className="fixed z-50 mt-1 bg-white dark:bg-[#1a1b26] border border-gray-200 dark:border-[#24283b] rounded-lg shadow-lg"
-          style={{
-            width: "400px",
-            left: dropdownStyles.left,
-            top: dropdownStyles.top,
-          }}
+          className="absolute z-50 mt-1 w-[400px] bg-white dark:bg-[#1a1b26] shadow-lg max-h-96 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
+          style={{ left: '0', top: '100%' }}
         >
-          <div className="p-2 border-b border-gray-200 dark:border-[#24283b]">
+          <div className="sticky top-0 z-10 bg-white dark:bg-[#1a1b26] px-2 py-1.5">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-[#565f89]" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-[#565f89]" />
               <input
-                ref={inputRef}
                 type="text"
+                ref={inputRef}
+                className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 dark:text-[#a9b1d6] ring-1 ring-inset ring-gray-300 dark:ring-[#24283b] placeholder:text-gray-400 dark:placeholder:text-[#565f89] focus:ring-2 focus:ring-inset focus:ring-blue-600 dark:focus:ring-[#7aa2f7] sm:text-sm sm:leading-6 bg-white dark:bg-[#1a1b26]"
+                placeholder="Suchen..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Materialien durchsuchen..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-[#24283b] rounded-md 
-                  focus:outline-none focus:ring-2 focus:ring-[#7aa2f7] dark:focus:ring-[#7aa2f7]
-                  bg-white dark:bg-[#1a1b26] text-gray-900 dark:text-[#a9b1d6]"
               />
             </div>
           </div>
 
-          <div className="max-h-[400px] overflow-auto">
+          <div className="py-1">
             {filteredMaterials.length === 0 ? (
-              <div className="p-2 text-sm text-gray-500 dark:text-[#565f89] text-center">
-                No materials found
+              <div className="px-3 py-2 text-sm text-gray-500 dark:text-[#565f89] text-center">
+                Keine Materialien gefunden
               </div>
             ) : (
-              <div className="py-1">
-                {filteredMaterials.map((material) => (
-                  <button
-                    key={material.id}
-                    onClick={() => handleSelect(material)}
-                    className={cn(
-                      "w-full px-3 py-2 text-sm text-left flex items-center gap-2",
-                      "hover:bg-blue-50 dark:hover:bg-[#292e42] focus:outline-none focus:bg-blue-50 dark:focus:bg-[#292e42]",
-                      selectedMaterial === material.name &&
-                        "bg-blue-50 dark:bg-[#24283b]",
-                      "text-gray-900 dark:text-[#a9b1d6]"
+              filteredMaterials.map((material) => (
+                <button
+                  key={material.id}
+                  className={cn(
+                    "flex items-center px-3 py-2 w-full text-sm text-left hover:bg-gray-100 dark:hover:bg-[#292e42]",
+                    material.name === selectedMaterial &&
+                      "bg-blue-50 dark:bg-[#24283b] text-blue-600 dark:text-[#7aa2f7]"
+                  )}
+                  onClick={() => handleSelect(material)}
+                >
+                  <span className="flex-1 truncate">
+                    {material.name}
+                    {material.density !== undefined && (
+                      <span className="ml-2 text-gray-500 dark:text-[#565f89]">
+                        ({material.density} kg/m³)
+                      </span>
                     )}
-                  >
-                    <div className="flex-1 min-w-0 space-y-0.5">
-                      <div className="font-medium break-words whitespace-normal">
-                        {material.name}
-                      </div>
-                      {showDensity && material.density && (
-                        <div className="text-xs text-gray-500 dark:text-[#565f89]">
-                          {material.density.toFixed(0)} kg/m³
-                        </div>
-                      )}
-                    </div>
-                    {selectedMaterial === material.name && (
-                      <Check className="w-4 h-4 text-[#7aa2f7] flex-shrink-0" />
-                    )}
-                  </button>
-                ))}
-              </div>
+                  </span>
+                  {material.name === selectedMaterial && (
+                    <Check className="h-4 w-4 text-blue-600 dark:text-[#7aa2f7]" />
+                  )}
+                </button>
+              ))
             )}
           </div>
         </div>

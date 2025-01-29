@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title:
-    "Ökobilanzierung: MAS FHNW Digitales Bauen CAS Integriertes Projektmanagement",
+    "listenbasierte Ökobilanzierung",
   description: "Calculate LCA for construction elements",
 };
 
